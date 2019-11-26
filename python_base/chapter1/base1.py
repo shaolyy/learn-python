@@ -103,7 +103,7 @@ print(orign_t)
 orign_t[0][0] = 6
 print(orign_t)
 
-# 5 if
+# 5 if while break continue
 numbers = [0, 3, 4, 6]
 for num in numbers:
     if num == 3:
@@ -111,6 +111,67 @@ for num in numbers:
     else:
         print(num)
 for num in numbers:
+    print(num)
     if num>1 and num<4:
-        print(num)
+        break
 strings = ['A','B','c']
+
+
+
+# dict
+
+# 创建
+alien_0 = {'color': 'green', 'points': 5}
+alien_1 = dict({'color': 'green', 'points': 5})
+# 使用可迭代对象
+lang = (['a',1], ['b', 3])
+alien_2 = dict(lang)     
+alien_3 = dict((('a',1), ('b', 2)))
+# 使用fromkeys
+alien_4 = {}.fromkeys(['a','b', 'c'], None)
+print(alien_0, alien_1, alien_2, alien_3, alien_4)
+# 访问
+print(alien_0['color'])
+print(alien_0.get('x', -1))        # get无keyerror
+# 遍历
+for key, value in alien_0.items():
+    print(key, value)
+for key in alien_0.keys():
+    print(key)
+for value in alien_0.values():
+    print(value)
+# 增
+alien_0['speed'] = 'slow'
+alien_0.update({'x':45})
+print(alien_0)
+# 改
+alien_0['speed'] = 'medium'
+print(alien_0)
+alien_0.setdefault('x',50)      # 若存在则更新值，不存在则创建
+print(alien_0)
+# 删除
+# del pop popitem
+del alien_0['x']        
+print(alien_0.pop('speed'))     # pop有keyerror
+# 清空
+del alien_1         # alien_1 完全删除 
+alien_2.clear()
+print(alien_2)
+
+
+# set
+s1 = set(alien_4.keys())
+print(s1)
+s2 = {3,'a'}
+print(s2, type(s2))
+print(s1 | s2, s1 & s2, s1 - s2)
+s1.add('d')
+s1.update([1, 2, 3])        # updae(seq)
+print(s1)
+# remove有keyerror， discard无
+print(s1.remove(1), s1.discard(1))
+print(s1)
+print(s1.pop())
+s1.clear()
+print(s1)
+
