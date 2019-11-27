@@ -11,6 +11,7 @@ kw = {'first_kw': 'first', 'second_kw': 'second'}
 print_params('place', 'default', *args, **kw)
 
 # 文件
+# 已项目文件夹为默认位置
 filepath = './python_base/chapter1/pi.txt'
 with open(filepath, "r+") as file:
     str1 = 'I love programming.\n'
