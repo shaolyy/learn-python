@@ -20,6 +20,9 @@ class Settings():
         self.bullet_color = 60, 60, 60
         self.bullet_allowed = 3
 
+        self.alien_speed_factor = 1
+        self.fleet_drop_speed = 10
+        self.fleet_direction = 1
 class Ship():
     """飞船类"""
     def __init__(self, settings, screen):
@@ -61,7 +64,20 @@ class Alien(Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.rect.width 
         self.rect.y = self.rect.height
+
+        self.x = float(self.rect.x)
     
+    def check_edges(self):
+        screen_rect = self.screen.get_rect()
+        if self.rect.right >= screen_rect.width:
+            return True
+        elif self.rect.left <= 0:
+            return True
+
+    def update(self):
+        self.x += (self.settings.alien_speed_factor * self.settings.fleet_direction)
+        self.rect.x = self.x 
+
     def blitme(self):
         self.screen.blit(self.image, self.rect)
 
@@ -121,12 +137,16 @@ def update_bullets(bullets):
                 bullets.remove(bullet)
         # print(len(bullets))
 
-def update_screen(settings, screen, ship, alien, bullets):
+def update_aliens(settings, aliens):
+    check_fleet_edges(settings, aliens)
+    aliens.update()
+
+def update_screen(settings, screen, ship, aliens, bullets):
     screen.fill(settings.bg_color)
     for bullet in bullets:
         bullet.draw_bullet()
     ship.blitme()
-    alien.blitme()
+    aliens.draw(screen)
     pygame.display.flip()
 
 def fire_bullet(settings, screen, ship, bullets):
@@ -134,6 +154,44 @@ def fire_bullet(settings, screen, ship, bullets):
         new_bullet = Bullet(settings, screen, ship)
         bullets.add(new_bullet)
 
+def get_alien_number_x(settings, alien_width):
+    available_space = settings.screen_width - 2 * alien_width
+    number_alien_x = int(available_space / (2 * alien_width))
+    return number_alien_x
+
+def get_alien_number_rows(settings, ship_height,alien_height):
+    availabels_space = settings.screen_height - 3 * alien_height - ship_height
+    number_alien_rows = int(availabels_space / (2 * alien_height))
+    return number_alien_rows
+
+def creat_alien(settings, screen, aliens, alien_number, row_number):
+        alien = Alien(settings, screen)
+        alien_width = alien.rect.width
+        alien_height = alien.rect.height
+        alien.x = alien_width + 2 * alien_width * alien_number
+        alien.rect.x = alien.x
+        alien.rect.y = alien.rect.height + 2 * alien_height * row_number
+        aliens.add(alien)
+
+def create_fleet(settings, screen, ship, aliens):
+    """创建外星人群"""
+    alien = Alien(settings, screen)
+    number_alien_x = get_alien_number_x(settings, alien.rect.width)
+    number_aline_rows = get_alien_number_rows(settings, ship.rect.height, alien.rect.height)
+    for row_number in range(number_aline_rows):
+        for alien_number in range(number_alien_x):
+            creat_alien(settings, screen, aliens, alien_number, row_number)
+
+def check_fleet_edges(settings, aliens):
+    for alien in aliens:
+        if alien.check_edges():
+            change_fleet_direction(settings, aliens)
+            break
+
+def change_fleet_direction(settings, aliens):
+    for alien in aliens:
+        alien.rect.y += alien.settings.fleet_drop_speed
+    settings.fleet_direction *= -1
 
 def run_game():
     pygame.init()
@@ -143,12 +201,15 @@ def run_game():
     pygame.display.set_caption('雷电')
     ship = Ship(settings,screen)
     bullets = Group()
-    alien = Alien(settings, screen)
+    # alien = Alien(settings, screen)
+    aliens = Group()
+    create_fleet(settings, screen, ship, aliens)
     running = True
     while running:
         check_events(settings, screen, ship, bullets)
         ship.update()
         update_bullets(bullets)
-        update_screen(settings, screen, ship, alien,bullets)
+        update_aliens(settings, aliens)
+        update_screen(settings, screen, ship, aliens, bullets)
 
 run_game()
