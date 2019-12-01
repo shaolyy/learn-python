@@ -1,8 +1,10 @@
 
+import sys
+
 # game_functions
 import pygame
-import sys
-from pygame.sprite import Sprite,Group
+from pygame.sprite import Group, Sprite
+
 
 class Settings():
     """存储游戏设置的类"""
