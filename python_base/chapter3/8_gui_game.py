@@ -51,6 +51,20 @@ class Ship():
     def blitme(self):
         self.screen.blit(self.image, self.rect)
 
+class Alien(Sprite):
+    def __init__(self, settings, screen):
+        super().__init__()
+        self.screen = screen
+        self.settings = settings
+
+        self.image = pygame.image.load('./python_base/data/chapter3/alien.bmp')
+        self.rect = self.image.get_rect()
+        self.rect.x = self.rect.width 
+        self.rect.y = self.rect.height
+    
+    def blitme(self):
+        self.screen.blit(self.image, self.rect)
+
 class Bullet(Sprite):
     """对子弹进行管理的类"""
     def __init__(self, settings, screen, ship):
@@ -107,11 +121,12 @@ def update_bullets(bullets):
                 bullets.remove(bullet)
         # print(len(bullets))
 
-def update_screen(settings, screen, ship, bullets):
+def update_screen(settings, screen, ship, alien, bullets):
     screen.fill(settings.bg_color)
     for bullet in bullets:
         bullet.draw_bullet()
     ship.blitme()
+    alien.blitme()
     pygame.display.flip()
 
 def fire_bullet(settings, screen, ship, bullets):
@@ -128,11 +143,12 @@ def run_game():
     pygame.display.set_caption('雷电')
     ship = Ship(settings,screen)
     bullets = Group()
+    alien = Alien(settings, screen)
     running = True
     while running:
         check_events(settings, screen, ship, bullets)
         ship.update()
         update_bullets(bullets)
-        update_screen(settings, screen, ship, bullets)
+        update_screen(settings, screen, ship, alien,bullets)
 
 run_game()
