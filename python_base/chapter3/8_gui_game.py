@@ -5,6 +5,7 @@ import sys
 import pygame
 from time import sleep
 from pygame.sprite import Group, Sprite
+import pygame.font
 
 
 class Settings():
@@ -13,18 +14,30 @@ class Settings():
         self.screen_width = 1200
         self.screen_height = 800
         self.bg_color = (230, 230, 230)
-        self.ship_speed_factor = 1.5
+
         self.ship_limit = 3
 
-        self.bullet_speed_factor = 1
         self.bullet_width = 300
         self.bullet_height = 15
         self.bullet_color = 60, 60, 60
         self.bullet_allowed = 3
 
-        self.alien_speed_factor = 1
         self.fleet_drop_speed = 10
+        self.speed_scale = 1.1
+
+        self.initialize_dynamic_settings()
+
+    def  initialize_dynamic_settings(self):
+        self.bullet_speed_factor = 3
+        self.ship_speed_factor = 1.5
+        self.alien_speed_factor = 1
         self.fleet_direction = 1
+    
+    def increase_speed(self):
+        self.ship_speed_factor *= self.speed_scale
+        self.bullet_speed_factor *= self.speed_scale
+        self.alien_speed_factor *= self.speed_scale
+
 class Ship():
     """飞船类"""
     def __init__(self, settings, screen):
@@ -115,10 +128,36 @@ class GameStats():
     def __init__(self, settings):
         self.settings = settings
         self.reset_stats()
-        self.game_active = True
+        self.game_active = False
 
     def reset_stats(self):
         self.ship_left = self.settings.ship_limit
+
+
+class Button():
+    def __init__(self, settings, screen, msg):
+        self.screen = screen
+        self.screen_rect = screen.get_rect()
+
+        self.width, self.height = 200, 50
+        self.button_color = (0, 255, 0)
+        self.text_color = (255, 255, 255)
+        self.font = pygame.font.SysFont(None, 48)
+
+        self.rect = pygame.Rect(0, 0, self.width, self.height)
+        self.rect.center = self.screen_rect.center
+
+        self.prep_msg(msg)
+
+    def prep_msg(self, msg):
+        self.msg_image = self.font.render(msg, True, self.text_color,
+                                self.button_color)
+        self.msg_image_rect = self.msg_image.get_rect()
+        self.msg_image_rect.center = self.rect.center
+
+    def draw_button(self):
+        self.screen.fill(self.button_color, self.rect)
+        self.screen.blit(self.msg_image, self.msg_image_rect)
 
 
 def check_keydown_events(event, settings, screen, ship, bullets):
@@ -135,8 +174,22 @@ def check_keyup_events(event, ship):
             ship.moving_right = False
         elif event.key == pygame.K_LEFT:
             ship.moving_left = False
+def check_play_button(settings, screen, stats, play_button, ship, aliens, bullets,
+                     mouse_x, mouse_y):
+    button_clicked = play_button.rect.collidepoint(mouse_x, mouse_y)
+    if button_clicked and not stats.game_active:
+        settings.initialize_dynamic_settings()
+        pygame.mouse.set_visible(False)
+        stats.reset_stats()
+        stats.game_active = True
 
-def check_events(settings, screen, ship, bullets):
+        aliens.empty()
+        bullets.empty()
+
+        create_fleet(settings, screen, ship, aliens)
+        ship.center_ship()
+
+def check_events(settings, screen, stats, play_button, ship, aliens, bullets):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
@@ -144,6 +197,10 @@ def check_events(settings, screen, ship, bullets):
             check_keydown_events(event, settings, screen, ship, bullets)
         elif event.type == pygame.KEYUP:
             check_keyup_events(event, ship)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            check_play_button(settings, screen, stats, play_button, ship, aliens,
+            bullets, mouse_x, mouse_y)
 
 def update_bullets(settings, screen, ship, aliens, bullets):
     bullets.update()
@@ -158,6 +215,7 @@ def check_bullets_aliens_collisions(settings, screen, ship, aliens, bullets):
                         True, True, collided = None)
     if len(aliens) == 0:
         bullets.empty()
+        settings.increase_speed()
         create_fleet(settings, screen, ship, aliens)
 
 def update_aliens(settings, stats, screen, ship, aliens, bullets):
@@ -168,12 +226,14 @@ def update_aliens(settings, stats, screen, ship, aliens, bullets):
         ship_hit(settings, stats, screen, ship, aliens, bullets)
     check_aliens_bottom(settings, stats, screen, ship, aliens, bullets)
 
-def update_screen(settings, screen, ship, aliens, bullets):
+def update_screen(settings, screen, stats, ship, aliens, bullets, play_button):
     screen.fill(settings.bg_color)
     for bullet in bullets:
         bullet.draw_bullet()
     ship.blitme()
     aliens.draw(screen)
+    if not stats.game_active:
+        play_button.draw_button()
     pygame.display.flip()
 
 def fire_bullet(settings, screen, ship, bullets):
@@ -192,6 +252,7 @@ def ship_hit(settings, stats, screen, ship, aliens, bullets):
         sleep(0.5)
     else:
         stats.game_active = False
+        pygame.mouse.set_visible(True)
 
 
 
@@ -248,6 +309,7 @@ def run_game():
     screen = pygame.display.set_mode((settings.screen_width, 
                                         settings.screen_height))
     pygame.display.set_caption('雷电')
+    play_button = Button(settings, screen, "Play")
     stats = GameStats(settings)
     ship = Ship(settings,screen)
     bullets = Group()
@@ -256,11 +318,13 @@ def run_game():
     create_fleet(settings, screen, ship, aliens)
     running = True
     while running:
-        check_events(settings, screen, ship, bullets)
+        check_events(settings, screen, stats, play_button, ship, 
+                        aliens,bullets)
         if stats.game_active:
             ship.update()
             update_bullets(settings, screen, ship, aliens, bullets)
             update_aliens(settings, stats, screen, ship, aliens, bullets)
-        update_screen(settings, screen, ship, aliens, bullets)
+        update_screen(settings, screen, stats, ship, aliens, 
+                        bullets, play_button)
 
 run_game()
